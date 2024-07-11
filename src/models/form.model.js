@@ -28,6 +28,8 @@ const formSchema = new Schema({
         type: Date,
         required: true
     }
+}, {
+    timestamps: true // This adds createdAt and updatedAt fields
 });
 
 // Create the model using the schema

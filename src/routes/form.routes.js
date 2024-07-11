@@ -1,56 +1,8 @@
 import express from 'express';
 import Form from '../models/form.model';
 import ExcelJS from 'exceljs';
+
 const formRouter = express.Router();
-
-
-/* Download all Forms as Excel */
-formRouter.get('/download/excel', async (req, res) => {
-    try {
-        const forms = await Form.find({});
-
-        const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet('Forms');
-
-        // Define the columns for the worksheet
-        worksheet.columns = [
-            { header: 'Name', key: 'name', width: 30 },
-            { header: 'Phone Number', key: 'phoneNumber', width: 20 },
-            { header: 'Region', key: 'region', width: 20 },
-            { header: 'Number of Individuals', key: 'individuals', width: 20 },
-            { header: 'Departure Date', key: 'departureDate', width: 20 },
-            { header: 'Return Date', key: 'returnDate', width: 20 }
-        ];
-
-        // Add rows to the worksheet
-        forms.forEach(form => {
-            worksheet.addRow({
-                name: form.name,
-                phoneNumber: form.phoneNumber,
-                region: form.region,
-                individuals: form.individuals,
-                departureDate: form.departureDate.toISOString().split('T')[0], // Format date as YYYY-MM-DD
-                returnDate: form.returnDate.toISOString().split('T')[0] // Format date as YYYY-MM-DD
-            });
-        });
-
-        // Write to a buffer
-        const buffer = await workbook.xlsx.writeBuffer();
-
-        // Set headers to download the file
-        res.setHeader('Content-Disposition', 'attachment; filename="forms.xlsx"');
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-
-        res.send(buffer);
-    } catch (err) {
-        res.status(500).send({
-            success: false,
-            error: err.message
-        });
-    }
-});
-
-
 
 /* Get all Forms */
 formRouter.get('/', (req, res, next) => {
@@ -142,6 +94,110 @@ formRouter.delete("/:form_id", (req, res, next) => {
             });
         }
     });
+});
+
+/* Download all Forms as Excel */
+formRouter.get('/download/excel', async (req, res) => {
+    try {
+        const forms = await Form.find({});
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Forms');
+
+        // Define the columns for the worksheet
+        worksheet.columns = [
+            { header: 'Creation Date', key: 'createdAt', width: 20 },
+            { header: 'Name', key: 'name', width: 30 },
+            { header: 'Phone Number', key: 'phoneNumber', width: 20 },
+            { header: 'Region', key: 'region', width: 20 },
+            { header: 'Number of Individuals', key: 'individuals', width: 20 },
+            { header: 'Departure Date', key: 'departureDate', width: 20 },
+            { header: 'Return Date', key: 'returnDate', width: 20 },
+        ];
+
+        // Add rows to the worksheet
+        forms.forEach(form => {
+            worksheet.addRow({
+                createdAt: form.createdAt.toISOString().split('T')[0], // Format date as YYYY-MM-DD
+                name: form.name,
+                phoneNumber: form.phoneNumber,
+                region: form.region,
+                individuals: form.individuals,
+                departureDate: form.departureDate.toISOString().split('T')[0], // Format date as YYYY-MM-DD
+                returnDate: form.returnDate.toISOString().split('T')[0], // Format date as YYYY-MM-DD
+            });
+        });
+
+        // Write to a buffer
+        const buffer = await workbook.xlsx.writeBuffer();
+
+        // Set headers to download the file
+        res.setHeader('Content-Disposition', 'attachment; filename="forms.xlsx"');
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+        res.send(buffer);
+    } catch (err) {
+        res.status(500).send({
+            success: false,
+            error: err.message
+        });
+    }
+});
+
+/* Download Forms as Excel within a date range */
+formRouter.get('/download/excel/:startDate/:endDate', async (req, res) => {
+    try {
+        const { startDate, endDate } = req.params;
+
+        const forms = await Form.find({
+            createdAt: {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            }
+        });
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Forms');
+
+        // Define the columns for the worksheet
+        worksheet.columns = [
+            { header: 'Creation Date', key: 'createdAt', width: 20 },
+            { header: 'Name', key: 'name', width: 30 },
+            { header: 'Phone Number', key: 'phoneNumber', width: 20 },
+            { header: 'Region', key: 'region', width: 20 },
+            { header: 'Number of Individuals', key: 'individuals', width: 20 },
+            { header: 'Departure Date', key: 'departureDate', width: 20 },
+            { header: 'Return Date', key: 'returnDate', width: 20 },
+            
+        ];
+
+        // Add rows to the worksheet
+        forms.forEach(form => {
+            worksheet.addRow({
+                createdAt: form.createdAt.toISOString().split('T')[0],// Format date as YYYY-MM-DD
+                name: form.name,
+                phoneNumber: form.phoneNumber,
+                region: form.region,
+                individuals: form.individuals,
+                departureDate: form.departureDate.toISOString().split('T')[0], // Format date as YYYY-MM-DD
+                returnDate: form.returnDate.toISOString().split('T')[0], // Format date as YYYY-MM-DD
+            });
+        });
+
+        // Write to a buffer
+        const buffer = await workbook.xlsx.writeBuffer();
+
+        // Set headers to download the file
+        res.setHeader('Content-Disposition', 'attachment; filename="forms_in_interval.xlsx"');
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+        res.send(buffer);
+    } catch (err) {
+        res.status(500).send({
+            success: false,
+            error: err.message
+        });
+    }
 });
 
 export default formRouter;
