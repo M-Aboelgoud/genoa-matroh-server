@@ -9,7 +9,9 @@ npm run build
 or
 
 ```
+set NODE_OPTIONS=--openssl-legacy-provider && yarn build
 yarn build
+
 ```
 
 to bundle your application
